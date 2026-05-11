@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Math Tower Race ⚡ Solo Challenge</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+
+:root{
+  --fire:#ff4500;
+  --gold:#ffd700;
+  --deep:#0d0820;
+  --orange:#ff6600;
+  --card:rgba(255,255,255,0.06);
+  --border:rgba(255,255,255,0.10);
+  --green:#22c55e;
+  --red:#ef4444;
+  --text:#fff;
+  --muted:#8888aa;
+}
+
+body{
+  font-family:'Nunito',sans-serif;
+  background:var(--deep);
+  color:var(--text);
+  min-height:100vh;
+  overflow-x:hidden;
+  position:relative;
+}
+
+body::after{
+  content:'';
+  position:fixed;bottom:0;left:0;right:0;height:6px;
+  background:linear-gradient(90deg,#ff6600,#ff4400,#ff8800,#ff3300,#ff6600);
+  background-size:200% 100%;
+  animation:lflow 2.5s linear infinite;
+  z-index:0;
+}
+@keyframes lflow{from{background-position:0%}to{background-position:200%}}
+
+.ember{
+  position:fixed;border-radius:50%;
+  pointer-events:none;z-index:0;
+  animation:rise linear infinite;
+}
+@keyframes rise{
+  0%{transform:translateY(0) scale(1);opacity:.9;}
+  100%{transform:translateY(-100vh) scale(0);opacity:0;}
+}
+
+.screen{display:none;width:100%;min-height:100vh;flex-direction:column;align-items:center;position:relative;z-index:1;}
+.screen.active{display:flex;}
+
+/* ══ INTRO ══ */
+#introScreen{
+  background:radial-gradient(ellipse at 50% 0%,#3d0f0f 0%,#0d0820 65%);
+  padding:1.5rem 1rem 2rem;gap:1.1rem;justify-content:center;
+}
+.logo-castle{font-size:2.8rem;display:block;text-align:center;animation:float 2.5s ease-in-out infinite;}
+@keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+.logo-title{
+  font-family:'Fredoka One',cursive;font-size:2.5rem;color:var(--gold);
+  text-shadow:0 0 40px #ff6600,0 4px 0 #883300;line-height:1;text-align:center;
+}
+.logo-sub{font-size:.82rem;color:#ff9966;margin-top:.3rem;letter-spacing:1.5px;text-align:center;}
+
+.card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:18px;padding:1.2rem 1rem;width:100%;max-width:430px;
+  position:relative;overflow:hidden;
+}
+.card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--fire),var(--gold),var(--fire));
+}
+.card-title{
+  font-family:'Fredoka One',cursive;font-size:.78rem;color:#ff9966;
+  letter-spacing:2px;text-transform:uppercase;margin-bottom:.85rem;text-align:center;
+}
+
+.name-input{
+  width:100%;padding:.75rem 1rem;border-radius:12px;
+  border:1.5px solid var(--border);background:rgba(255,255,255,.07);
+  color:#fff;font-family:'Nunito',sans-serif;font-size:1rem;font-weight:700;
+  outline:none;margin-bottom:.8rem;text-align:center;letter-spacing:1px;
+  transition:border-color .2s;
+}
+.name-input:focus{border-color:var(--gold);background:rgba(255,215,0,.07);}
+.name-input::placeholder{color:#555;font-weight:400;}
+
+.char-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;}
+.char-opt{
+  aspect-ratio:1;border-radius:10px;border:2px solid transparent;
+  background:rgba(255,255,255,.05);cursor:pointer;font-size:1.35rem;
+  display:flex;align-items:center;justify-content:center;transition:all .15s;
+}
+.char-opt:hover{background:rgba(255,200,0,.12);transform:scale(1.08);}
+.char-opt.sel{border-color:var(--gold);background:rgba(255,215,0,.14);box-shadow:0 0 12px rgba(255,215,0,.35);}
+
+.diff-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.45rem;}
+.diff-btn{
+  padding:.65rem .4rem;border-radius:12px;border:1.5px solid var(--border);
+  background:rgba(255,255,255,.04);color:var(--muted);
+  font-family:'Nunito',sans-serif;font-size:.82rem;font-weight:800;
+  cursor:pointer;transition:all .15s;text-align:center;
+}
+.diff-btn:hover{border-color:rgba(255,255,255,.2);}
+.diff-btn[data-d="0"].sel{border-color:var(--gold);background:rgba(255,215,0,.1);color:var(--gold);}
+.diff-btn[data-d="1"].sel{border-color:var(--green);background:rgba(34,197,94,.1);color:var(--green);}
+.diff-btn[data-d="2"].sel{border-color:#fbbf24;background:rgba(251,191,36,.1);color:#fbbf24;}
+.diff-btn[data-d="3"].sel{border-color:var(--red);background:rgba(239,68,68,.1);color:var(--red);}
+
+.info-strip{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.5rem;}
+.badge{
+  display:inline-flex;align-items:center;gap:.3rem;
+  background:rgba(255,255,255,.05);border:1px solid var(--border);
+  border-radius:30px;padding:.2rem .65rem;font-size:.7rem;color:var(--muted);
+}
+.badge strong{color:#fff;}
+
+.btn-fire{
+  font-family:'Fredoka One',cursive;font-size:1.15rem;
+  padding:.8rem 2rem;border:none;border-radius:50px;cursor:pointer;
+  background:linear-gradient(135deg,#ff6600,#ff3300);color:#fff;
+  box-shadow:0 5px 0 #991100,0 8px 24px rgba(255,80,0,.45);
+  transition:all .18s;width:100%;max-width:430px;
+  display:flex;align-items:center;justify-content:center;gap:.5rem;
+}
+.btn-fire:hover{transform:translateY(-2px);box-shadow:0 7px 0 #991100,0 12px 28px rgba(255,80,0,.5);}
+.btn-fire:active{transform:scale(.97);}
+
+/* ══ COUNTDOWN ══ */
+#countScreen{
+  background:radial-gradient(ellipse at 50% 0%,#3d0f0f 0%,#0d0820 65%);
+  justify-content:center;align-items:center;gap:1rem;
+}
+.count-num{
+  font-family:'Fredoka One',cursive;font-size:8rem;color:var(--gold);
+  text-shadow:0 0 60px rgba(255,215,0,.5);animation:cpop .5s ease;
+}
+@keyframes cpop{from{transform:scale(1.8);opacity:0;}to{transform:scale(1);opacity:1;}}
+.count-label{font-size:.9rem;color:#ff9966;letter-spacing:2px;}
+
+/* ══ GAME ══ */
+#gameScreen{background:var(--deep);padding:0;justify-content:flex-start;}
+
+.hud{
+  width:100%;display:flex;align-items:center;
+  padding:.5rem .8rem;background:rgba(0,0,0,.55);
+  border-bottom:2px solid rgba(255,80,0,.4);gap:.6rem;flex-shrink:0;
+}
+.hud-left{display:flex;align-items:center;gap:6px;flex:1;}
+.hud-avatar{font-size:1.5rem;}
+.hud-name{font-weight:900;font-size:.75rem;color:var(--gold);}
+.hud-score{font-family:'Fredoka One',cursive;font-size:.78rem;color:#ff9966;}
+.hud-center{
+  font-family:'Fredoka One',cursive;font-size:.72rem;color:#fff;
+  background:rgba(255,80,0,.3);padding:.2rem .6rem;border-radius:20px;
+  text-align:center;border:1px solid rgba(255,120,0,.35);white-space:nowrap;
+}
+.hud-right{display:flex;align-items:center;gap:6px;}
+.prog-wrap{width:65px;height:5px;background:rgba(255,255,255,.1);border-radius:10px;overflow:hidden;}
+.prog-bar{height:100%;background:linear-gradient(90deg,var(--fire),var(--gold));border-radius:10px;transition:width .3s;}
+
+.timer-ring{width:48px;height:48px;position:relative;flex-shrink:0;}
+.timer-ring svg{transform:rotate(-90deg);}
+.bg-c{fill:none;stroke:rgba(255,255,255,.1);stroke-width:4;}
+.prog-c{
+  fill:none;stroke:var(--gold);stroke-width:4;stroke-linecap:round;
+  stroke-dasharray:126;stroke-dashoffset:0;
+  transition:stroke-dashoffset .1s linear,stroke .3s;
+}
+.timer-num{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-family:'Fredoka One',cursive;font-size:.72rem;color:var(--gold);
+}
+
+.game-body{
+  flex:1;width:100%;max-width:480px;margin:0 auto;
+  padding:.85rem .9rem 1.5rem;
+  display:flex;flex-direction:column;gap:.85rem;overflow-y:auto;
+}
+
+.tower-strip{
+  display:flex;align-items:flex-end;justify-content:center;
+  gap:3px;height:28px;flex-wrap:nowrap;overflow:hidden;
+}
+.tblock{width:12px;border-radius:2px;border:1px solid rgba(255,255,255,.12);transition:all .3s;}
+
+.lvl-badge{
+  display:inline-flex;align-items:center;gap:.35rem;
+  padding:.22rem .7rem;border-radius:30px;
+  font-size:.7rem;font-weight:800;letter-spacing:.4px;align-self:flex-start;
+}
+.lvl-1{background:rgba(34,197,94,.14);color:var(--green);border:1px solid rgba(34,197,94,.3);}
+.lvl-2{background:rgba(251,191,36,.14);color:#fbbf24;border:1px solid rgba(251,191,36,.3);}
+.lvl-3{background:rgba(239,68,68,.14);color:var(--red);border:1px solid rgba(239,68,68,.3);}
+
+.q-text{
+  font-family:'Fredoka One',cursive;font-size:1.5rem;color:#fff;
+  line-height:1.3;text-shadow:0 1px 10px rgba(255,255,255,.15);
+}
+
+.opts-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;}
+.opt-btn{
+  padding:.75rem .5rem;border-radius:14px;border:1.5px solid var(--border);
+  background:rgba(255,255,255,.05);color:#fff;cursor:pointer;
+  font-family:'Nunito',sans-serif;font-size:.95rem;font-weight:800;
+  transition:all .14s;text-align:left;
+  display:flex;align-items:center;gap:.45rem;line-height:1.25;
+}
+.opt-btn:hover:not(:disabled){
+  border-color:rgba(255,200,0,.45);background:rgba(255,200,0,.08);transform:translateY(-1px);
+}
+.opt-btn:disabled{cursor:default;}
+.opt-letter{
+  width:26px;height:26px;border-radius:7px;background:rgba(255,255,255,.1);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Fredoka One',cursive;font-size:.7rem;flex-shrink:0;transition:background .15s;
+}
+.opt-btn.correct{border-color:var(--green)!important;background:rgba(34,197,94,.16)!important;animation:abounce .35s ease;}
+.opt-btn.correct .opt-letter{background:var(--green);color:#000;}
+.opt-btn.wrong{border-color:var(--red)!important;background:rgba(239,68,68,.14)!important;animation:ashake .38s ease;}
+.opt-btn.wrong .opt-letter{background:var(--red);}
+.opt-btn.show-correct{border-color:var(--green)!important;background:rgba(34,197,94,.10)!important;}
+.opt-btn.show-correct .opt-letter{background:var(--green);color:#000;}
+@keyframes abounce{0%{transform:scale(1);}50%{transform:scale(1.05);}100%{transform:scale(1);}}
+@keyframes ashake{0%,100%{transform:translateX(0);}25%{transform:translateX(-7px);}75%{transform:translateX(7px);}}
+
+.timeout-banner{
+  background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);
+  border-radius:10px;padding:.4rem .9rem;font-size:.82rem;
+  color:var(--red);text-align:center;font-weight:800;display:none;
+}
+.skip-btn{
+  align-self:flex-end;background:transparent;border:1px solid var(--border);
+  border-radius:8px;color:var(--muted);font-family:'Nunito',sans-serif;
+  font-size:.72rem;font-weight:700;padding:.28rem .7rem;cursor:pointer;transition:all .15s;
+}
+.skip-btn:hover{color:#fff;border-color:rgba(255,255,255,.25);}
+
+.rpop{
+  position:fixed;top:50%;left:50%;
+  transform:translate(-50%,-50%) scale(0);
+  background:rgba(8,4,22,.97);border-radius:20px;
+  padding:1.1rem 1.6rem;text-align:center;z-index:200;
+  border:2px solid transparent;
+  transition:transform .22s cubic-bezier(.25,.46,.45,.94);
+  pointer-events:none;min-width:170px;
+}
+.rpop.show{transform:translate(-50%,-50%) scale(1);}
+.rpop.win{border-color:var(--gold);box-shadow:0 0 40px rgba(255,215,0,.35);}
+.rpop.lose{border-color:var(--red);box-shadow:0 0 30px rgba(255,0,0,.25);}
+.rpop-em{font-size:2.2rem;}
+.rpop-txt{font-family:'Fredoka One',cursive;font-size:1rem;color:var(--gold);margin-top:.2rem;}
+
+/* ══ RESULT ══ */
+#resultScreen{
+  background:radial-gradient(ellipse at 50% 0%,#1a3a1a 0%,#0d0820 60%);
+  padding:1.5rem 1rem 2rem;gap:1.1rem;align-items:center;
+}
+.res-title{
+  font-family:'Fredoka One',cursive;font-size:1.9rem;color:var(--gold);
+  text-align:center;text-shadow:0 0 30px rgba(255,215,0,.4);
+}
+.res-sub{font-size:.8rem;color:#ff9966;text-align:center;}
+
+.score-big{
+  font-family:'Fredoka One',cursive;font-size:4.5rem;color:var(--gold);
+  text-align:center;text-shadow:0 0 50px rgba(255,215,0,.5);line-height:1;
+}
+.score-lbl{font-size:.72rem;color:var(--muted);text-align:center;letter-spacing:1.5px;text-transform:uppercase;}
+
+.lava-prog{width:100%;max-width:440px;height:12px;border-radius:30px;background:rgba(255,255,255,.06);overflow:hidden;border:1px solid var(--border);}
+.lava-fill{height:100%;border-radius:30px;background:linear-gradient(90deg,#22c55e,#ffd700,#ff4500);transition:width 1s ease;}
+
+.stats-row{display:flex;gap:.6rem;width:100%;max-width:440px;}
+.sbox{flex:1;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:.75rem .5rem;text-align:center;}
+.sbox-val{font-family:'Fredoka One',cursive;font-size:1.4rem;}
+.sbox-lbl{font-size:.62rem;color:var(--muted);margin-top:.15rem;letter-spacing:.5px;}
+
+.review-wrap{width:100%;max-width:440px;}
+.review-head{font-family:'Fredoka One',cursive;font-size:.75rem;letter-spacing:2px;text-transform:uppercase;color:#ff9966;margin-bottom:.65rem;}
+
+.review-list{display:flex;flex-direction:column;gap:.4rem;max-height:300px;overflow-y:auto;padding-right:3px;}
+.review-list::-webkit-scrollbar{width:3px;}
+.review-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:6px;}
+
+.rev-item{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:12px;padding:.65rem .75rem;display:flex;gap:.6rem;align-items:flex-start;
+}
+.rev-item.r-wrong{border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.06);}
+.rev-item.r-correct{border-color:rgba(34,197,94,.2);background:rgba(34,197,94,.04);}
+.rev-num{
+  width:22px;height:22px;border-radius:6px;background:rgba(255,255,255,.08);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Fredoka One',cursive;font-size:.6rem;flex-shrink:0;margin-top:1px;
+}
+.rev-item.r-wrong .rev-num{background:var(--red);}
+.rev-item.r-correct .rev-num{background:rgba(34,197,94,.3);color:var(--green);}
+.rev-q{font-size:.78rem;font-weight:800;line-height:1.3;}
+.rev-ans{font-size:.7rem;color:var(--muted);margin-top:.2rem;line-height:1.35;}
+.rev-ans strong{color:var(--green);}
+.rev-ans .my-a{color:var(--red);}
+.rev-pts{font-family:'Fredoka One',cursive;font-size:.68rem;color:var(--gold);margin-left:auto;white-space:nowrap;flex-shrink:0;}
+
+.btn-row{display:flex;gap:.5rem;width:100%;max-width:440px;flex-wrap:wrap;}
+.btn-outline{
+  flex:1;padding:.8rem 1rem;border-radius:12px;border:1.5px solid var(--border);
+  background:var(--card);color:#fff;font-family:'Fredoka One',cursive;font-size:.9rem;
+  cursor:pointer;transition:all .18s;text-align:center;
+}
+.btn-outline:hover{border-color:rgba(255,255,255,.28);background:rgba(255,255,255,.1);}
+.btn-excel{
+  flex:1;padding:.8rem 1rem;border-radius:12px;
+  border:1.5px solid rgba(34,197,94,.3);background:rgba(34,197,94,.09);
+  color:var(--green);font-family:'Fredoka One',cursive;font-size:.9rem;
+  cursor:pointer;transition:all .18s;
+}
+.btn-excel:hover{background:rgba(34,197,94,.18);border-color:rgba(34,197,94,.5);}
+
+.cf{position:fixed;width:8px;height:8px;top:-20px;border-radius:2px;pointer-events:none;z-index:300;animation:cfall linear forwards;}
+@keyframes cfall{to{transform:translateY(110vh) rotate(720deg);opacity:0;}}
+</style>
+</head>
+<body>
+
+<!-- ═══ INTRO ═══ -->
+<div id="introScreen" class="screen active">
+  <span class="logo-castle">🏰🔥</span>
+  <div class="logo-title">MATH TOWER RACE</div>
+  <div class="logo-sub">Solo Challenge · Quantitative Reasoning</div>
+
+  <div class="card">
+    <div class="card-title">👤 Profil Kamu</div>
+    <input class="name-input" id="nameInput" type="text" placeholder="Nama kamu..." maxlength="20">
+    <div class="char-grid" id="charGrid"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">⚙️ Pilih Level</div>
+    <div class="diff-grid">
+      <button class="diff-btn" data-d="0">🎯 Semua Level</button>
+      <button class="diff-btn" data-d="1">🟢 Level 1 · Easy</button>
+    </div>
+    <div class="diff-grid">
+      <button class="diff-btn" data-d="2">🟡 Level 2 · Medium</button>
+      <button class="diff-btn" data-d="3">🔴 Level 3 · Hard</button>
+    </div>
+    <div class="info-strip">
+      <div class="badge">📝 <strong id="chipQ">30</strong> soal</div>
+      <div class="badge">⏱️ <strong>20</strong>s/soal</div>
+      <div class="badge">🔥 Cepat = Poin Tinggi</div>
+    </div>
+  </div>
+
+  <button class="btn-fire" onclick="startGame()">🔥 Mulai Battle!</button>
+</div>
+
+<!-- ═══ COUNTDOWN ═══ -->
+<div id="countScreen" class="screen">
+  <div class="count-num" id="countNum">3</div>
+  <div class="count-label">SIAPKAN DIRIMU!</div>
+</div>
+
+<!-- ═══ GAME ═══ -->
+<div id="gameScreen" class="screen">
+  <div class="hud">
+    <div class="hud-left">
+      <div class="hud-avatar" id="hudAvatar">🧙‍♂️</div>
+      <div>
+        <div class="hud-name" id="hudName">Pemain</div>
+        <div class="hud-score">⚡ <span id="hudScore">0</span> poin</div>
+      </div>
+    </div>
+    <div class="hud-center" id="hudCenter">Easy<br><span style="font-size:.58rem;opacity:.7">1/30</span></div>
+    <div class="hud-right">
+      <div class="prog-wrap"><div class="prog-bar" id="progBar" style="width:0%"></div></div>
+      <div class="timer-ring">
+        <svg width="48" height="48" viewBox="0 0 48 48">
+          <circle class="bg-c" cx="24" cy="24" r="20"/>
+          <circle class="prog-c" id="timerCircle" cx="24" cy="24" r="20"/>
+        </svg>
+        <div class="timer-num" id="timerNum">20</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="game-body">
+    <div class="tower-strip" id="towerStrip"></div>
+    <div class="lvl-badge" id="lvlBadge"></div>
+    <div class="q-text" id="qText"></div>
+    <div class="opts-grid" id="optsGrid"></div>
+    <div class="timeout-banner" id="timeoutBanner">⏰ Waktu habis! Lanjut soal berikutnya...</div>
+    <button class="skip-btn" id="skipBtn" onclick="skipQuestion()">Lewati →</button>
+  </div>
+</div>
+
+<!-- ═══ RESULT ═══ -->
+<div id="resultScreen" class="screen">
+  <div style="font-size:2.5rem;text-align:center;">🏆🏰</div>
+  <div class="res-title" id="resTitle">Selesai!</div>
+  <div class="res-sub" id="resSub"></div>
+  <div class="score-big" id="finalScore">0</div>
+  <div class="score-lbl">Total Poin</div>
+  <div class="lava-prog"><div class="lava-fill" id="lavaFill" style="width:0%"></div></div>
+  <div class="stats-row">
+    <div class="sbox"><div class="sbox-val" id="stCorrect" style="color:var(--green)">0</div><div class="sbox-lbl">✅ Benar</div></div>
+    <div class="sbox"><div class="sbox-val" id="stWrong" style="color:var(--red)">0</div><div class="sbox-lbl">❌ Salah</div></div>
+    <div class="sbox"><div class="sbox-val" id="stAvg" style="color:#fbbf24">0s</div><div class="sbox-lbl">⚡ Rata-rata</div></div>
+  </div>
+  <div class="review-wrap">
+    <div class="review-head">📋 Review Jawaban per Soal</div>
+    <div class="review-list" id="reviewList"></div>
+  </div>
+  <div class="btn-row">
+    <button class="btn-excel" onclick="exportExcel()">📊 Export Excel</button>
+    <button class="btn-fire" style="flex:1;max-width:none;" onclick="goIntro()">🏠 Main Lagi</button>
+  </div>
+</div>
+
+<div class="rpop" id="rpop">
+  <div class="rpop-em" id="rpopEm"></div>
+  <div class="rpop-txt" id="rpopTxt"></div>
+</div>
+
+<script>
+/* ═══ SOAL — sesuai PDF ═══ */
+const QUESTIONS = {
+  1:[
+    {q:'1.245 + 538 = …',     o:['1.773','1.783','1.793','1.873'],     a:1},
+    {q:'3.720 − 864 = …',     o:['2.756','2.856','2.956','3.056'],     a:1},
+    {q:'48 × 125 = …',        o:['5.980','5.990','6.000','6.010'],     a:2},
+    {q:'7.488 ÷ 8 = …',       o:['916','926','936','946'],             a:2},
+    {q:'2.650 + 1.475 = …',   o:['4.025','4.115','4.125','4.225'],     a:2},
+    {q:'5.300 − 1.847 = …',   o:['3.343','3.353','3.443','3.453'],     a:3},
+    {q:'36 × 250 = …',        o:['8.980','9.000','9.120','9.200'],     a:1},
+    {q:'9.360 ÷ 12 = …',      o:['760','770','780','790'],             a:2},
+    {q:'4.825 + 2.398 = …',   o:['7.113','7.123','7.213','7.223'],     a:3},
+    {q:'6.000 − 2.347 = …',   o:['3.553','3.643','3.653','3.753'],     a:2},
+    {q:'75 × 480 = …',        o:['35.990','36.000','36.110','36.120'], a:1},
+    {q:'8.640 ÷ 24 = …',      o:['340','350','360','370'],             a:2},
+    {q:'3.456 + 4.789 = …',   o:['8.135','8.145','8.235','8.245'],     a:3},
+    {q:'9.100 − 3.675 = …',   o:['5.325','5.335','5.415','5.425'],     a:3},
+    {q:'124 × 75 = …',        o:['9.290','9.300','9.310','9.320'],     a:1},
+  ],
+  2:[
+    {q:'56 × 8 − 78 = …',     o:['370','390','360','270'],   a:0},
+    {q:'(45 − 9) × 7 = …',    o:['232','252','272','292'],   a:1},
+    {q:'240 − 9 × 18 = …',    o:['78','98','68','88'],       a:0},
+    {q:'(72 − 8) × 5 = …',    o:['280','300','320','340'],   a:2},
+    {q:'38 × 9 − 56 = …',     o:['266','256','286','276'],   a:2},
+    {q:'(80 − 14) × 6 = …',   o:['336','356','376','396'],   a:3},
+    {q:'63 × 7 − 95 = …',     o:['346','356','366','376'],   a:0},
+    {q:'500 − 6 × 45 = …',    o:['190','210','230','250'],   a:2},
+    {q:'(93 − 17) × 4 = …',   o:['294','304','314','324'],   a:0},
+    {q:'47 × 8 − 112 = …',    o:['204','224','244','264'],   a:3},
+    {q:'(65 − 11) × 7 = …',   o:['278','358','378','388'],   a:2},
+    {q:'85 × 6 − 96 = …',     o:['414','434','454','474'],   a:0},
+    {q:'78 − 22 × 9 = …',     o:['110','−110','−120','120'], a:3},
+    {q:'32 × 7 − 48 = …',     o:['156','176','196','216'],   a:1},
+    {q:'400 − 5 × 54 = …',    o:['110','130','120','140'],   a:1},
+  ],
+  3:[
+    {q:'1,5 × 240 + 3 × 80 = …',    o:['360','540','570','600'], a:3},
+    {q:'0,25 × 400 + 12 × 15 = …',  o:['100','280','250','260'], a:1},
+    {q:'3/4 × 360 + 5 × 27 = …',    o:['405','270','375','420'], a:0},
+    {q:'2,5 × 80 + 6 × 45 = …',     o:['200','440','470','450'], a:2},
+    {q:'1/3 × 270 + 8 × 35 = …',    o:['90','350','390','370'],  a:3},
+    {q:'4 × 125 + 0,5 × 360 = …',   o:['680','500','650','710'], a:0},
+    {q:'1,5 × 160 + 9 × 20 = …',    o:['240','390','420','450'], a:2},
+    {q:'0,75 × 480 + 7 × 30 = …',   o:['360','570','540','600'], a:1},
+    {q:'2/5 × 350 + 4 × 65 = …',    o:['140','370','420','400'], a:3},
+    {q:'3 × 180 + 1,25 × 240 = …',  o:['740','840','940','810'], a:1},
+    {q:'1/4 × 480 + 6 × 55 = …',    o:['430','440','450','460'], a:2},
+    {q:'0,5 × 560 + 7 × 40 = …',    o:['280','520','600','560'], a:3},
+    {q:'2,5 × 120 + 5 × 54 = …',    o:['300','540','570','600'], a:2},
+    {q:'3/5 × 450 + 9 × 25 = …',    o:['495','270','465','520'], a:0},
+    {q:'1,5 × 320 + 4 × 75 = …',    o:['480','740','780','810'], a:2},
+  ]
+};
+
+const CHARS=['🧙‍♂️','🦸','🧝','🤖','🦊','🐲','👸','🧌','🦅','🐯','🦋','🧜'];
+const BLOCK_COLORS=['#7a5c10','#96731e','#b8892e','#d4a84b','#e8c06b','#ffd700','#ff9900','#ff6600'];
+const PTS={
+  1:[100,80,60,40,0],
+  2:[150,120,90,60,0],
+  3:[200,160,120,80,0],
+};
+const LVL_NAME={1:'🟢 Easy',2:'🟡 Medium',3:'🔴 Hard'};
+const LVL_CLASS={1:'lvl-1',2:'lvl-2',3:'lvl-3'};
+const TIMER_SECS=20;
+
+let myName='Pemain',myChar=0,diffMode=0;
+let qList=[],qIdx=0,score=0,qStartTime=0;
+let timerInterval=null,myAnswered=false;
+let answers=[];
+
+window.onload=()=>{
+  buildCharGrid();
+  spawnEmbers();
+  document.querySelectorAll('.diff-btn').forEach(b=>{
+    b.addEventListener('click',()=>{
+      document.querySelectorAll('.diff-btn').forEach(x=>x.classList.remove('sel'));
+      b.classList.add('sel');diffMode=+b.dataset.d;
+      document.getElementById('chipQ').textContent=diffMode===0?30:10;
+    });
+  });
+  document.querySelector('.diff-btn[data-d="0"]').classList.add('sel');
+};
+
+function spawnEmbers(){
+  const cols=['#ffd700','#ff6600','#ff4500','#ffa500'];
+  for(let i=0;i<14;i++){
+    const e=document.createElement('div');e.className='ember';
+    e.style.cssText=`left:${Math.random()*100}%;bottom:0;width:${3+Math.random()*4}px;height:${3+Math.random()*4}px;background:${cols[Math.floor(Math.random()*cols.length)]};animation-duration:${3+Math.random()*5}s;animation-delay:${Math.random()*5}s;`;
+    document.body.appendChild(e);
+  }
+}
+
+function buildCharGrid(){
+  const g=document.getElementById('charGrid');
+  CHARS.forEach((c,i)=>{
+    const d=document.createElement('div');
+    d.className='char-opt'+(i===0?' sel':'');
+    d.textContent=c;
+    d.onclick=()=>{g.querySelectorAll('.char-opt').forEach(x=>x.classList.remove('sel'));d.classList.add('sel');myChar=i;};
+    g.appendChild(d);
+  });
+}
+
+function setScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
+
+function startGame(){
+  myName=document.getElementById('nameInput').value.trim()||'Pemain';
+  qList=buildQList();qIdx=0;score=0;answers=[];
+  setScreen('countScreen');
+  runCountdown(3,()=>{setScreen('gameScreen');setupHUD();loadQuestion();});
+}
+
+function runCountdown(n,cb){
+  const el=document.getElementById('countNum');
+  if(n===0){cb();return;}
+  el.textContent=n;el.style.animation='none';
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{el.style.animation='cpop .5s ease';}));
+  setTimeout(()=>runCountdown(n-1,cb),900);
+}
+
+function buildQList(){
+  const sh=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+  if(diffMode===0){
+    const q1=sh([...QUESTIONS[1]]).slice(0,10).map(q=>({...q,level:1}));
+    const q2=sh([...QUESTIONS[2]]).slice(0,10).map(q=>({...q,level:2}));
+    const q3=sh([...QUESTIONS[3]]).slice(0,10).map(q=>({...q,level:3}));
+    return [...q1,...q2,...q3];
+  }
+  return sh([...QUESTIONS[diffMode]]).slice(0,10).map(q=>({...q,level:diffMode}));
+}
+
+function setupHUD(){
+  document.getElementById('hudAvatar').textContent=CHARS[myChar];
+  document.getElementById('hudName').textContent=myName;
+}
+
+function loadQuestion(){
+  if(qIdx>=qList.length){endGame();return;}
+  myAnswered=false;
+  const q=qList[qIdx],total=qList.length;
+
+  document.getElementById('hudScore').textContent=score.toLocaleString();
+  document.getElementById('progBar').style.width=(qIdx/total*100)+'%';
+  document.getElementById('hudCenter').innerHTML=`${LVL_NAME[q.level].split(' ')[1]}<br><span style="font-size:.58rem;opacity:.7">${qIdx+1}/${total}</span>`;
+
+  buildTowerStrip(qIdx,total);
+
+  const badge=document.getElementById('lvlBadge');
+  badge.textContent=LVL_NAME[q.level];
+  badge.className='lvl-badge '+LVL_CLASS[q.level];
+
+  document.getElementById('qText').textContent=q.q;
+  document.getElementById('timeoutBanner').style.display='none';
+  document.getElementById('skipBtn').style.display='flex';
+
+  const grid=document.getElementById('optsGrid');
+  grid.innerHTML='';
+  q.o.forEach((opt,oi)=>{
+    const btn=document.createElement('button');
+    btn.className='opt-btn';btn.id='opt'+oi;
+    btn.innerHTML=`<span class="opt-letter">${'ABCD'[oi]}</span>${opt}`;
+    btn.onclick=()=>pickAnswer(oi);
+    grid.appendChild(btn);
+  });
+
+  qStartTime=Date.now();
+  startTimer();
+}
+
+function buildTowerStrip(done,total){
+  const strip=document.getElementById('towerStrip');
+  strip.innerHTML='';
+  for(let i=0;i<total;i++){
+    const b=document.createElement('div');b.className='tblock';
+    b.style.background=i<done?BLOCK_COLORS[i%BLOCK_COLORS.length]:'rgba(255,255,255,.06)';
+    b.style.height=(i<done?'16':'8')+'px';
+    strip.appendChild(b);
+  }
+}
+
+function startTimer(){
+  clearInterval(timerInterval);
+  const circle=document.getElementById('timerCircle');
+  const numEl=document.getElementById('timerNum');
+  const circum=2*Math.PI*20;
+  function tick(){
+    const elapsed=(Date.now()-qStartTime)/1000;
+    const rem=Math.max(0,TIMER_SECS-elapsed);
+    const pct=rem/TIMER_SECS;
+    circle.style.strokeDashoffset=circum*(1-pct);
+    numEl.textContent=Math.ceil(rem);
+    if(pct>0.5) circle.style.stroke='#ffd700';
+    else if(pct>0.25) circle.style.stroke='#ff8800';
+    else circle.style.stroke='#ef4444';
+    if(rem<=0){clearInterval(timerInterval);onTimeout();}
+  }
+  tick();timerInterval=setInterval(tick,80);
+}
+
+function onTimeout(){
+  if(myAnswered) return;
+  myAnswered=true;clearInterval(timerInterval);
+  const q=qList[qIdx];
+  document.querySelectorAll('.opt-btn').forEach(b=>b.disabled=true);
+  document.getElementById('opt'+q.a).classList.add('show-correct');
+  document.getElementById('timeoutBanner').style.display='block';
+  document.getElementById('skipBtn').style.display='none';
+  answers.push({qn:qIdx+1,q:q.q,level:q.level,correct:false,myIdx:-1,correctIdx:q.a,correctAns:q.o[q.a],myAns:'(waktu habis)',pts:0,elapsed:TIMER_SECS});
+  showRpop('⏰','Waktu Habis!',false);
+  setTimeout(()=>{qIdx++;loadQuestion();},1800);
+}
+
+function pickAnswer(idx){
+  if(myAnswered) return;
+  myAnswered=true;clearInterval(timerInterval);
+  document.getElementById('skipBtn').style.display='none';
+  const elapsed=(Date.now()-qStartTime)/1000;
+  const q=qList[qIdx];
+  const correct=idx===q.a;
+  const lvl=q.level;
+  let pts=0;
+  if(correct){
+    if(elapsed<5) pts=PTS[lvl][0];
+    else if(elapsed<10) pts=PTS[lvl][1];
+    else if(elapsed<15) pts=PTS[lvl][2];
+    else pts=PTS[lvl][3];
+    score+=pts;
+  }
+  document.querySelectorAll('.opt-btn').forEach(b=>b.disabled=true);
+  document.getElementById('opt'+idx).classList.add(correct?'correct':'wrong');
+  if(!correct) document.getElementById('opt'+q.a).classList.add('show-correct');
+  showRpop(correct?'✅':'❌',correct?`+${pts} poin · ${elapsed.toFixed(1)}s`:'Jawaban Salah!',correct);
+  answers.push({qn:qIdx+1,q:q.q,level:q.level,correct,myIdx:idx,correctIdx:q.a,correctAns:q.o[q.a],myAns:q.o[idx],pts,elapsed:Math.round(elapsed*10)/10});
+  setTimeout(()=>{qIdx++;loadQuestion();},1600);
+}
+
+function skipQuestion(){
+  if(myAnswered) return;
+  myAnswered=true;clearInterval(timerInterval);
+  const elapsed=(Date.now()-qStartTime)/1000;
+  const q=qList[qIdx];
+  document.getElementById('skipBtn').style.display='none';
+  document.querySelectorAll('.opt-btn').forEach(b=>b.disabled=true);
+  document.getElementById('opt'+q.a).classList.add('show-correct');
+  answers.push({qn:qIdx+1,q:q.q,level:q.level,correct:false,myIdx:-1,correctIdx:q.a,correctAns:q.o[q.a],myAns:'(dilewati)',pts:0,elapsed:Math.round(elapsed*10)/10});
+  showRpop('⏭️','Soal Dilewati',false);
+  setTimeout(()=>{qIdx++;loadQuestion();},1400);
+}
+
+let rpopTimer=null;
+function showRpop(em,txt,win){
+  const r=document.getElementById('rpop');
+  document.getElementById('rpopEm').textContent=em;
+  document.getElementById('rpopTxt').textContent=txt;
+  r.className='rpop show '+(win?'win':'lose');
+  clearTimeout(rpopTimer);
+  rpopTimer=setTimeout(()=>r.classList.remove('show'),1700);
+}
+
+function endGame(){
+  clearInterval(timerInterval);setScreen('resultScreen');
+  const correct=answers.filter(a=>a.correct).length;
+  const wrong=answers.filter(a=>!a.correct).length;
+  const elapseds=answers.filter(a=>a.correct).map(a=>a.elapsed);
+  const avg=elapseds.length?(elapseds.reduce((s,v)=>s+v,0)/elapseds.length).toFixed(1):'-';
+  const pct=Math.round(correct/answers.length*100);
+
+  document.getElementById('finalScore').textContent=score.toLocaleString();
+  document.getElementById('resSub').textContent=`${CHARS[myChar]} ${myName}`;
+  document.getElementById('stCorrect').textContent=correct;
+  document.getElementById('stWrong').textContent=wrong;
+  document.getElementById('stAvg').textContent=avg+'s';
+
+  const titles=['📚 Ayo Tingkatkan!','💪 Terus Berlatih!','🎯 Bagus!','🏆 Luar Biasa!'];
+  document.getElementById('resTitle').textContent=pct>=80?titles[3]:pct>=60?titles[2]:pct>=40?titles[1]:titles[0];
+
+  setTimeout(()=>{document.getElementById('lavaFill').style.width=pct+'%';},300);
+
+  const list=document.getElementById('reviewList');
+  list.innerHTML=answers.map(a=>`
+    <div class="rev-item ${a.correct?'r-correct':'r-wrong'}">
+      <div class="rev-num">${a.qn}</div>
+      <div style="flex:1;min-width:0;">
+        <div class="rev-q">${a.q}</div>
+        <div class="rev-ans">
+          ${a.correct
+            ?`<strong>✅ ${a.correctAns}</strong>`
+            :`<span class="my-a">❌ ${a.myAns}</span> &nbsp;·&nbsp; <strong>✅ ${a.correctAns}</strong>`
+          }
+          <span style="color:var(--muted);margin-left:.3rem;">${a.elapsed}s</span>
+        </div>
+      </div>
+      <div class="rev-pts">${a.pts>0?'+'+a.pts:'0'}</div>
+    </div>
+  `).join('');
+
+  if(pct>=80) launchConfetti();
+}
+
+function launchConfetti(){
+  const colors=['#ffd700','#ff6600','#ff4500','#22c55e','#9f7aea','#ff6584'];
+  for(let i=0;i<55;i++){
+    const el=document.createElement('div');el.className='cf';
+    el.style.cssText=`left:${Math.random()*100}%;background:${colors[Math.floor(Math.random()*colors.length)]};animation-duration:${.9+Math.random()*1.3}s;animation-delay:${Math.random()*.6}s;width:${5+Math.random()*7}px;height:${5+Math.random()*7}px;`;
+    document.body.appendChild(el);setTimeout(()=>el.remove(),2800);
+  }
+}
+
+function exportExcel(){
+  const now=new Date();
+  const dateStr=now.toLocaleDateString('id-ID',{day:'2-digit',month:'2-digit',year:'numeric'});
+  const timeStr=now.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+  const correct=answers.filter(a=>a.correct).length;
+  const wrong=answers.filter(a=>!a.correct).length;
+  const pct=Math.round(correct/answers.length*100);
+  const elapseds=answers.filter(a=>a.correct).map(a=>a.elapsed);
+  const avg=elapseds.length?(elapseds.reduce((s,v)=>s+v,0)/elapseds.length).toFixed(1):'-';
+  const lvlLbl={1:'Easy',2:'Medium',3:'Hard'};
+  const modeLbl=diffMode===0?'Semua Level (Easy+Medium+Hard)':lvlLbl[diffMode]+' Only';
+
+  const rows=[];
+  rows.push(['HASIL MATH TOWER RACE — Quantitative Reasoning Solo Challenge']);
+  rows.push([]);
+  rows.push(['Nama','Tanggal','Waktu','Mode Level','Total Soal','Benar','Salah','Skor Total','Akurasi (%)','Rata-rata Waktu Benar (s)']);
+  rows.push([myName,dateStr,timeStr,modeLbl,answers.length,correct,wrong,score,pct+'%',avg]);
+  rows.push([]);
+  rows.push(['=== DETAIL PER SOAL ===']);
+  rows.push(['No. Soal','Level','Pertanyaan','Jawaban Peserta','Jawaban Benar','Status','Poin','Waktu (s)']);
+  answers.forEach(a=>{
+    rows.push([a.qn,lvlLbl[a.level]||'',a.q,a.myAns,a.correctAns,a.correct?'BENAR':'SALAH',a.pts,a.elapsed]);
+  });
+  rows.push([]);
+  rows.push(['=== SKALA PSIKOLOGIS — PENGUKURAN QUANTITATIVE REASONING ===']);
+  rows.push(['Dimensi','Nilai','Keterangan']);
+
+  const fastAns=answers.filter(a=>a.correct&&a.elapsed<5).length;
+  const medAns =answers.filter(a=>a.correct&&a.elapsed>=5&&a.elapsed<10).length;
+  const slowAns=answers.filter(a=>a.correct&&a.elapsed>=10).length;
+  const skipCnt=answers.filter(a=>a.myAns==='(dilewati)').length;
+  const toCnt  =answers.filter(a=>a.myAns==='(waktu habis)').length;
+
+  rows.push(['Skor Total',score,'Poin akumulatif berbasis kecepatan jawaban']);
+  rows.push(['Akurasi Keseluruhan (%)',pct,'Persentase jawaban benar dari total soal']);
+  rows.push(['Respons Sangat Cepat (<5 detik)',fastAns,'Jawaban benar dalam <5 detik (fluency tinggi)']);
+  rows.push(['Respons Cepat (5–10 detik)',medAns,'Jawaban benar dalam 5–10 detik']);
+  rows.push(['Respons Lambat (>10 detik)',slowAns,'Jawaban benar namun lambat']);
+  rows.push(['Soal Dilewati',skipCnt,'Jumlah soal yang dilewati (avoidance)']);
+  rows.push(['Soal Timeout',toCnt,'Jumlah soal yang waktu habis']);
+  rows.push(['Rata-rata Waktu Jawaban Benar (s)',avg,'Rata-rata kecepatan saat menjawab benar']);
+  [1,2,3].forEach(lvl=>{
+    const la=answers.filter(a=>a.level===lvl);if(!la.length) return;
+    const lc=la.filter(a=>a.correct).length;
+    const ls=la.reduce((s,a)=>s+a.pts,0);
+    rows.push([`Akurasi Level ${lvlLbl[lvl]} (%)`,Math.round(lc/la.length*100),`Kemampuan pada soal ${lvlLbl[lvl]}`]);
+    rows.push([`Skor Level ${lvlLbl[lvl]}`,ls,`Total poin dari soal level ${lvlLbl[lvl]}`]);
+  });
+
+  const csv=rows.map(r=>r.map(c=>{const s=String(c).replace(/"/g,'""');return/[,"\n]/.test(s)?`"${s}"`:s;}).join(',')).join('\r\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=`MathTowerRace_${myName.replace(/\s+/g,'_')}_${now.toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a);a.click();
+  setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},200);
+}
+
+function goIntro(){clearInterval(timerInterval);setScreen('introScreen');}
+</script>
+</body>
+</html>
